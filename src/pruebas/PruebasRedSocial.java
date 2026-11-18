@@ -35,6 +35,7 @@ public class PruebasRedSocial {
     public static void main(String[] args) {
         probarAltas();
         probarRelaciones();
+        probarBajasYVecinos();
 
         System.out.println();
         System.out.println(ok + "/" + total + " pruebas OK");
@@ -102,5 +103,49 @@ public class PruebasRedSocial {
         verificar("eliminar amistad con inexistente", !r.eliminarAmistad("ana", "zoe"));
         verificar("dejar de seguir", r.dejarDeSeguir("ana", "caro") && !r.sigueA("ana", "caro"));
         verificar("dejar de seguir otra vez", !r.dejarDeSeguir("ana", "caro"));
+    }
+
+    // ===================== BAJAS Y VECINOS =====================
+
+    private static void probarBajasYVecinos() {
+        RedSocial r = redEjemplo();
+        r.agregarAmistad("caro", "dani");
+        r.agregarAmistad("beto", "caro");
+        r.agregarAmistad("ana", "caro");
+        r.agregarAmistad("ana", "beto");
+        verificar("amigos(ana) = beto, caro", "beto, caro".equals(r.listarAmigos("ana")));
+        verificar("amigos(caro) = ana, beto, dani", "ana, beto, dani".equals(r.listarAmigos("caro")));
+        verificar("grados 2, 2, 3, 1", r.contarAmigos("ana") == 2 && r.contarAmigos("beto") == 2
+                && r.contarAmigos("caro") == 3 && r.contarAmigos("dani") == 1);
+        verificar("4 amistades", r.totalAmistades() == 4);
+        verificar("amigos de inexistente = null", r.listarAmigos("zoe") == null);
+        verificar("contarAmigos de inexistente = -1", r.contarAmigos("zoe") == -1);
+
+        r.seguir("dani", "ana");
+        r.seguir("beto", "ana");
+        r.seguir("ana", "dani");
+        verificar("seguidos(dani) = ana", "ana".equals(r.listarSeguidos("dani")));
+        verificar("seguidores(ana) = beto, dani", "beto, dani".equals(r.listarSeguidores("ana")));
+        verificar("seguidores sin nadie = vacio", "".equals(r.listarSeguidores("caro")));
+        verificar("seguidores de inexistente = null", r.listarSeguidores("zoe") == null);
+        verificar("3 seguimientos", r.totalSeguimientos() == 3);
+
+        verificar("quitar caro - dani", r.eliminarAmistad("caro", "dani"));
+        verificar("dani sin amigos", "".equals(r.listarAmigos("dani")) && r.contarAmigos("dani") == 0);
+
+        verificar("baja de ana (tiene amigos y seguidores)", r.eliminarPersona("ana"));
+        verificar("ana ya no existe", !r.existePersona("ana"));
+        verificar("beto ya no tiene a ana", "caro".equals(r.listarAmigos("beto")));
+        verificar("dani ya no sigue a ana", "".equals(r.listarSeguidos("dani")));
+        verificar("quedan 3 personas", r.totalPersonas() == 3);
+        verificar("queda 1 amistad y 0 seguimientos", r.totalAmistades() == 1 && r.totalSeguimientos() == 0);
+        verificar("baja de inexistente", !r.eliminarPersona("ana"));
+        verificar("ana se puede registrar de nuevo limpia",
+                r.registrarPersona("ana", "Ana") && "".equals(r.listarAmigos("ana")));
+
+        verificar("baja de la ultima de la lista (dani)", r.eliminarPersona("dani"));
+        verificar("baja de la cabeza (ana)", r.eliminarPersona("ana"));
+        verificar("baja de todos deja la red vacia",
+                r.eliminarPersona("beto") && r.eliminarPersona("caro") && r.estaVacia());
     }
 }

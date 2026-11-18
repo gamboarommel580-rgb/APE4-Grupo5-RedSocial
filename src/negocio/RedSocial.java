@@ -213,4 +213,120 @@ public class RedSocial {
         Vertice vb = buscar(b);
         return va != null && vb != null && buscarArista(va, vb, TipoRelacion.SEGUIR) != null;
     }
+
+    // ===================== BAJAS Y VECINOS =====================
+
+    /** Quita de la lista de w TODAS las aristas que van hacia v (amistad y seguir). */
+    private void quitarHacia(Vertice w, Vertice v) {
+        Arista prev = null;
+        Arista a = w.getAristas();
+        while (a != null) {
+            if (a.getDestino() == v) {
+                //PASO 1: se desengancha la arista; prev no avanza porque la siguiente
+                // tambien puede ir hacia v (amistad y seguir a la vez)
+                if (prev == null) {
+                    w.setAristas(a.getSig());
+                } else {
+                    prev.setSig(a.getSig());
+                }
+            } else {
+                prev = a;   // solo avanza prev si no se borro
+            }
+            a = a.getSig();
+        }
+    }
+
+    /**
+     * Baja de persona: borra a la persona y todas las relaciones que LLEGAN a ella. O(V + A)
+     * Las relaciones que SALEN de ella desaparecen junto con su nodo.
+     */
+    public boolean eliminarPersona(String usuario) {
+        Vertice v = buscar(usuario);
+        if (v == null) {
+            return false;
+        }
+        //PASO 1: cualquier persona puede tener una relacion hacia v; se limpian todas
+        for (Vertice w = cabeza; w != null; w = w.getSig()) {
+            quitarHacia(w, v);
+        }
+        //PASO 2: desenlazar v de la lista de personas con un puntero previo
+        Vertice prev = null;
+        for (Vertice w = cabeza; w != null; prev = w, w = w.getSig()) {
+            if (w == v) {
+                if (prev == null) {
+                    cabeza = w.getSig();
+                } else {
+                    prev.setSig(w.getSig());
+                }
+                break;
+            }
+        }
+        v.setSig(null);
+        v.setAristas(null);
+        return true;
+    }
+
+    /** Amigos de la persona: "beto, caro". "" si no tiene, null si no existe. O(V + grado) */
+    public String listarAmigos(String usuario) {
+        Vertice v = buscar(usuario);
+        return v == null ? null : listar(v, TipoRelacion.AMISTAD);
+    }
+
+    /** A quienes sigue la persona. "" si a nadie, null si no existe. O(V + grado) */
+    public String listarSeguidos(String usuario) {
+        Vertice v = buscar(usuario);
+        return v == null ? null : listar(v, TipoRelacion.SEGUIR);
+    }
+
+    /**
+     * Quienes siguen a la persona. Hay que revisar las listas de todos porque
+     * la arista esta guardada en quien sigue, no en quien es seguido. O(V + A)
+     */
+    public String listarSeguidores(String usuario) {
+        Vertice v = buscar(usuario);
+        if (v == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        //PASO 1: se revisa la lista de cada persona buscando una arista SEGUIR hacia v
+        for (Vertice w = cabeza; w != null; w = w.getSig()) {
+            if (buscarArista(w, v, TipoRelacion.SEGUIR) != null) {
+                sb.append(sb.length() == 0 ? "" : ", ").append(w.getPersona().getUsuario());
+            }
+        }
+        return sb.toString();
+    }
+
+    private int contar(Vertice v, TipoRelacion tipo) {
+        int n = 0;
+        for (Arista a = v.getAristas(); a != null; a = a.getSig()) {
+            if (a.getTipo() == tipo) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /** Grado de amistad: cuantos amigos tiene. -1 si no existe. */
+    public int contarAmigos(String usuario) {
+        Vertice v = buscar(usuario);
+        return v == null ? -1 : contar(v, TipoRelacion.AMISTAD);
+    }
+
+    /** Cuantas amistades hay en la red (cada una esta guardada dos veces). */
+    public int totalAmistades() {
+        int n = 0;
+        for (Vertice v = cabeza; v != null; v = v.getSig()) {
+            n += contar(v, TipoRelacion.AMISTAD);
+        }
+        return n / 2;
+    }
+
+    public int totalSeguimientos() {
+        int n = 0;
+        for (Vertice v = cabeza; v != null; v = v.getSig()) {
+            n += contar(v, TipoRelacion.SEGUIR);
+        }
+        return n;
+    }
 }
