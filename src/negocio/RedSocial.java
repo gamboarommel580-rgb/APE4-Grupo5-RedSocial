@@ -123,4 +123,94 @@ public class RedSocial {
         }
         return sb.toString();
     }
+
+    // ===================== RELACIONES =====================
+
+    /** Arista o -> d de ese tipo, o null. O(grado de o) */
+    private Arista buscarArista(Vertice o, Vertice d, TipoRelacion tipo) {
+        for (Arista a = o.getAristas(); a != null; a = a.getSig()) {
+            if (a.getDestino() == d && a.getTipo() == tipo) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    private void insertar(Vertice o, Vertice d, TipoRelacion tipo) {
+        Arista a = new Arista(d, tipo);
+        a.setSig(o.getAristas());   //PASO 1: la nueva apunta a la primera relacion de o
+        o.setAristas(a);            //PASO 2: la nueva pasa a ser la primera
+    }
+
+    /** Quita la arista o -> d de ese tipo usando un puntero previo. */
+    private boolean quitar(Vertice o, Vertice d, TipoRelacion tipo) {
+        Arista prev = null;
+        for (Arista a = o.getAristas(); a != null; prev = a, a = a.getSig()) {
+            if (a.getDestino() == d && a.getTipo() == tipo) {
+                if (prev == null) {
+                    o.setAristas(a.getSig());   //PASO 1: era la primera, la cabeza pasa a la siguiente
+                } else {
+                    prev.setSig(a.getSig());    //PASO 2: si no, la anterior se la salta
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Crea la amistad a - b en los dos sentidos. O(V + grado)
+     * false si falta alguna persona, si es la misma persona (lazo) o si ya son amigos.
+     */
+    public boolean agregarAmistad(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        if (va == null || vb == null || va == vb || buscarArista(va, vb, TipoRelacion.AMISTAD) != null) {
+            return false;
+        }
+        insertar(va, vb, TipoRelacion.AMISTAD);   //PASO 1: a -> b
+        insertar(vb, va, TipoRelacion.AMISTAD);   //PASO 2: b -> a (la amistad es reciproca)
+        return true;
+    }
+
+    /** Quita la amistad de los dos lados. false si no eran amigos. O(V + grado) */
+    public boolean eliminarAmistad(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        if (va == null || vb == null || buscarArista(va, vb, TipoRelacion.AMISTAD) == null) {
+            return false;
+        }
+        quitar(va, vb, TipoRelacion.AMISTAD);   //PASO 1: se quita a -> b
+        quitar(vb, va, TipoRelacion.AMISTAD);   //PASO 2: y tambien b -> a
+        return true;
+    }
+
+    /** a empieza a seguir a b (un solo sentido). Mismas validaciones que la amistad. */
+    public boolean seguir(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        if (va == null || vb == null || va == vb || buscarArista(va, vb, TipoRelacion.SEGUIR) != null) {
+            return false;
+        }
+        insertar(va, vb, TipoRelacion.SEGUIR);
+        return true;
+    }
+
+    public boolean dejarDeSeguir(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        return va != null && vb != null && quitar(va, vb, TipoRelacion.SEGUIR);
+    }
+
+    public boolean sonAmigos(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        return va != null && vb != null && buscarArista(va, vb, TipoRelacion.AMISTAD) != null;
+    }
+
+    public boolean sigueA(String a, String b) {
+        Vertice va = buscar(a);
+        Vertice vb = buscar(b);
+        return va != null && vb != null && buscarArista(va, vb, TipoRelacion.SEGUIR) != null;
+    }
 }

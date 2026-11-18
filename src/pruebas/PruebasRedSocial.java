@@ -34,6 +34,7 @@ public class PruebasRedSocial {
 
     public static void main(String[] args) {
         probarAltas();
+        probarRelaciones();
 
         System.out.println();
         System.out.println(ok + "/" + total + " pruebas OK");
@@ -70,5 +71,36 @@ public class PruebasRedSocial {
         r.registrarPersona("Beto", "Alberto");
         verificar("usuario se guarda en minusculas", r.mostrarRed().startsWith("beto (Alberto)"));
         verificar("insercion al inicio: beto primero", r.mostrarRed().split("\\R")[0].startsWith("beto"));
+    }
+
+    // ===================== RELACIONES =====================
+
+    private static void probarRelaciones() {
+        RedSocial r = redEjemplo();
+        verificar("amistad ana - beto", r.agregarAmistad("ana", "beto"));
+        verificar("amistad en los dos sentidos", r.sonAmigos("ana", "beto") && r.sonAmigos("beto", "ana"));
+        verificar("amistad repetida rechazada", !r.agregarAmistad("beto", "ana"));
+        verificar("lazo rechazado", !r.agregarAmistad("ana", "ana"));
+        verificar("amistad con inexistente rechazada", !r.agregarAmistad("ana", "zoe"));
+        verificar("amistad desde inexistente rechazada", !r.agregarAmistad("zoe", "ana"));
+        verificar("amistad con null rechazada", !r.agregarAmistad(null, "ana"));
+
+        verificar("ana sigue a caro", r.seguir("ana", "caro"));
+        verificar("seguir es dirigido", r.sigueA("ana", "caro") && !r.sigueA("caro", "ana"));
+        verificar("seguir repetido rechazado", !r.seguir("ana", "caro"));
+        verificar("seguirse a si mismo rechazado", !r.seguir("ana", "ana"));
+        verificar("seguir a inexistente rechazado", !r.seguir("ana", "zoe"));
+        verificar("amigo y seguidor a la vez", r.seguir("ana", "beto") && r.sonAmigos("ana", "beto"));
+
+        verificar("mostrarRed linea de ana",
+                r.mostrarRed().contains("ana (Ana) | amigos: beto | sigue a: beto, caro"));
+
+        verificar("eliminar amistad ana - beto", r.eliminarAmistad("beto", "ana"));
+        verificar("se quito de los dos lados", !r.sonAmigos("ana", "beto") && !r.sonAmigos("beto", "ana"));
+        verificar("quitar amistad no toca el seguir", r.sigueA("ana", "beto"));
+        verificar("eliminar amistad inexistente", !r.eliminarAmistad("ana", "beto"));
+        verificar("eliminar amistad con inexistente", !r.eliminarAmistad("ana", "zoe"));
+        verificar("dejar de seguir", r.dejarDeSeguir("ana", "caro") && !r.sigueA("ana", "caro"));
+        verificar("dejar de seguir otra vez", !r.dejarDeSeguir("ana", "caro"));
     }
 }
